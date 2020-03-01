@@ -1,4 +1,4 @@
-# Data Structure and Algrithm (数据结构与算法)
+# Data Structure and Algorithm (数据结构与算法)
 
 练习程序及上机报告
 
