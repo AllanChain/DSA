@@ -19,7 +19,6 @@ const char *names[13] = {"AB", "AC", "AD", "BA", "BC", "BD", "DA",
                          "DB", "DC", "EA", "EB", "EC", "ED"};
 
 int main(int argc, char const *argv[]) {
-  short *relationP = relation[0];
   short colorIndex = 0;
   short i, j;
   bool needColor = true;
