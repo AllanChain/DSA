@@ -1,6 +1,7 @@
 # 着色问题上机报告
 
-<a href="https://github.com/AllanChain/DSA/issues/1" style="float:right">查看题目</a>
+[查看题目](https://github.com/AllanChain/DSA/issues/1)
+
 
 ## 问题理解
 
