@@ -224,7 +224,7 @@ int main(int argc, char const *argv[]) {
   while ((std::getline(db, line))) {
     if (line.substr(0, 4) == "CAR:")
       carList->add(line.substr(4));
-    else
+    else // Add record
       carList->head->recs->add(line.substr(4));
   }
 
