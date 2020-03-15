@@ -130,6 +130,5 @@ int main(int argc, char const *argv[]) {
       keyword = strtok(NULL, " \n");
     }
   }
-
   return 0;
 }
