@@ -2,45 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// typedef struct {
-//   int location;
-//   Node *next;
-// } Node;
-
-// typedef struct {
-//   Node *top;
-// } LinkStack;
-
-// LinkStack *stackCreate() {
-//   LinkStack *stack;
-//   stack = (LinkStack *)malloc(sizeof(LinkStack));
-//   stack->top = NULL;
-//   return stack;
-// }
-
-// void stackPush(LinkStack *stack, int location) {
-//   Node *node = (Node *)malloc(sizeof(Node));
-//   node->location = location;
-//   node->next = stack->top;
-//   stack->top = node;
-// }
-
-// int stackPop(LinkStack *stack) {
-//   Node *node = stack->top;
-//   stack->top = node->next;
-//   return node->location;
-// }
-
-// int stackPeek(LinkStack *stack) { return stack->top->location; }
-
-// bool stackEmpty(LinkStack *stack) { return stack->top == NULL; }
-
-bool get(int location, int item) { return (location & item) != 0; }
-
 const int farmer = 0x08;
 const int wolf = 0x04;
 const int goat = 0x02;
 const int cabbage = 0x01;
+
+bool get(int location, int item) { return (location & item) != 0; }
 
 bool safe(int location) {
   if (get(location, goat) != get(location, farmer) &&
@@ -54,8 +21,6 @@ int main(int argc, char const *argv[]) {
   int movers, location, newLocation;
   int route[16]; // record location before
   bool done = false;
-  // LinkStack *moveStack = stackCreate();
-  // stackPush(moveStack, 0x00);
   location = 0x00;
   route[0] = 0;
   for (int i = 1; i < 16; i++) {
@@ -65,7 +30,6 @@ int main(int argc, char const *argv[]) {
       route[i] = -2;
   }
   while (!done) {
-    // location = stackPeek(moveStack);
     // try to move all items
     for (movers = 1; movers <= 8; movers <<= 1) {
       // if farmer and item are at the same place
