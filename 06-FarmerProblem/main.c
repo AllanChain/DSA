@@ -23,12 +23,8 @@ int main(int argc, char const *argv[]) {
   bool done = false;
   location = 0x00;
   route[0] = 0;
-  for (int i = 1; i < 16; i++) {
-    if (safe(i))
-      route[i] = -1;
-    else
-      route[i] = -2;
-  }
+  for (int i = 1; i < 16; i++)
+    route[i] = safe(i) ? -1 : -2;
   while (!done) {
     // try to move all items
     for (movers = 1; movers <= 8; movers <<= 1) {
