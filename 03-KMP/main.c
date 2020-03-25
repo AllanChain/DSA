@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 
 typedef struct {
   int n;   // string length
-  char *c; // string chars
+  const char *c; // string chars
 } String;
 
 int find(String *target, String *pattern, int *next) {
@@ -42,12 +43,14 @@ void calcNext(String *pattern, int *next) {
 
 int main(int argc, char const *argv[])
 {
-  char t[19] = "aasdsasdaasdaasasd";
-  char p[10] = "asdaasasd";
+  if (argc <= 2) {
+    printf("Please give me target pattern");
+    return -1;
+  }
   int next[9];
   int result;
-  String target = {18, t};
-  String pattern = {9, p};
+  String target = {(int)strlen(argv[1]), argv[1]};
+  String pattern = {(int)strlen(argv[2]), argv[2]};
 
   calcNext(&pattern, next);
   result = find(&target, &pattern, next);

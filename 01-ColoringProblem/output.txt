@@ -1,0 +1,5 @@
+$ ./main                                                         
+AB AC AD BA DC ED 
+BC BD EA 
+DA DB 
+EB EC 

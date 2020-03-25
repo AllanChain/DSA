@@ -146,6 +146,10 @@ int main(int argc, char const *argv[]) {
 
   queue = LinkQueue_create();
   fp = fopen("maze.txt", "r");
+  if (fp == NULL) {
+    printf("Cannot find `maze.txt`. Exiting...");
+    exit(-1);
+  }
   maze = read_maze(fp, &pos, &out);
   LinkQueue_put(queue, pos);
   while (*(maze + out) == OUT && !LinkQueue_empty(queue)) {
@@ -172,6 +176,8 @@ int main(int argc, char const *argv[]) {
     }
   }
   if (*(maze + out) != OUT) {
+    // need `out` because `O` is erased from maze
+    // to be a while condition, but `I` not erased
     print_graph(maze, out);
   } else {
     printf("No solution");

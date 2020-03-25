@@ -1,0 +1,4 @@
+$ ./main fuck u
+Found at 2
+$ ./main fuck you
+Found at -1                             
