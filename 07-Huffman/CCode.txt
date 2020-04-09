@@ -1,0 +1,75 @@
+//defines the entry point for the console application.
+//
+#include "stdafx.h"
+#include <string.h>
+#include <time.h>
+#include <malloc.h>
+#define maxname 16
+typedef struct _person
+{
+	int id;
+	char name[maxname];
+} person;
+#define maxnum 200
+typedef struct
+{
+	person persons[maxnum];
+	int num;	
+} my_calss, *pmy;
+my_calss all;
+void lgetargv(char *string, int index, char *argv)
+{
+	char work_str[5*1024], *token;
+	int m = 0;
+	char seps[] = " ,=\"\t\n";
+	strcpy(work_str, string); 
+	token = strtok( work_str, seps );
+	while( token != null && m < index)
+	{
+		token = strtok( null, seps );
+		m++;
+	}
+	if (m == index && token)
+		strcpy(argv, token);
+	else
+		argv[0] = 0;
+}
+int main(int argc, char* argv[])
+{
+	char filename[1024], line[1024], string[256];
+	strcpy(filename, "names.txt");
+	int i = 0;
+	file *fp;
+	fp = fopen(filename, "r");
+	if (fp)
+	{
+		while (!feof(fp))
+		{
+			line[0] = 0;
+			fgets(line, sizeof(line), fp);
+			if (line[0])
+			{
+				lgetargv(line, 0, string);
+				sscanf(string, "%d", &all.persons[i].id);
+				lgetargv(line, 1, string);
+				strcpy(all.persons[i].name, string);
+				i++;
+			}
+		}
+		fclose(fp);
+	}
+	all.num = i-1;
+	int groups[10], k;
+	for (i = 0; i < 10; i++) groups[i] = 0;
+	for (i = 0; i < all.num; i++)
+	{
+		printf("%12d %s\n", all.persons[i].id, all.persons[i].name);
+		k = all.persons[i].id%10;
+		groups[k]++;
+	}
+	for (i = 0; i < 10; i++)
+	{
+		printf("%d: %02d\n", i, groups[i]);
+	}
+	return 0;
+}
