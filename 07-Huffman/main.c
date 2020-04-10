@@ -149,6 +149,9 @@ LinkCharNode *char_freq(FILE *f) {
   head = (LinkCharNode *)malloc(sizeof(LinkCharNode));
   if (head == NULL)
     no_space_exit();
+  // Note EOF is not a character,
+  // but I am using it to distinguish
+  // the end of the binary file
   while (!feof(f))
     LinkCharNode_find(head, fgetc(f))->w++;
   return head;
@@ -186,6 +189,8 @@ short read_bit(FILE *f) {
     byte = fgetc(f);
     bit_index = 7;
   }
+  // 10100101
+  //   ^      get 00100000, and move to 00000001
   result = (byte & (1 << bit_index)) >> bit_index;
   bit_index--;
   return result;
@@ -212,10 +217,11 @@ void tran_huffman(HTree *htree, FILE *f_bin, FILE *f_tran) {
     while (1) {
       tmp = bit ? htree->hArr[tree_index].llink : htree->hArr[tree_index].rlink;
       if (tmp == -1)
-        break;
+        break;  // Do not proceed if is leaf
       tree_index = tmp;
       bit = read_bit(f_bin);
     }
+    // Do not write EOF
     if (htree->hArr[tree_index].c == -1)
       break;
     fputc(htree->hArr[tree_index].c, f_tran);
@@ -231,6 +237,7 @@ int compare_file(FILE *f1, FILE *f2) {
   return c1 - c2;
 }
 
+/** Prints the binary form of every char */
 void print_dict(LinkCharNode *lchar) {
   LinkCodeNode *lcode;
   while (lchar->next) {
