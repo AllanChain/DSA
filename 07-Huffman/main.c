@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,6 +25,7 @@ typedef struct LinkCharNode {
 
 // Short for Huffman Tree Node
 typedef struct {
+  char c;
   int w; // weight
   int parent, rlink, llink;
 } HNode;
@@ -91,6 +91,7 @@ HTree *create_huffman(int m, LinkCharNode *lchar_head) {
     if (i < m) {
       lchar = lchar->next;
       node->w = lchar->w;
+      node->c = lchar->c;
     } else
       node->w = -1;
   }
@@ -125,54 +126,117 @@ HTree *create_huffman(int m, LinkCharNode *lchar_head) {
   return htree;
 }
 
-void add_freq(LinkCharNode *head, char c) {
+LinkCharNode *LinkCharNode_find(LinkCharNode *head, char c) {
   LinkCharNode *lchar = head;
   while (lchar->next) {
     lchar = lchar->next;
-    if (lchar->c == c) {
-      lchar->w += 1;
-      return;
-    }
+    if (lchar->c == c)
+      return lchar;
   }
   lchar->next = (LinkCharNode *)malloc(sizeof(LinkCharNode));
-  if (lchar->next == NULL)
+  lchar = lchar->next;
+  if (lchar == NULL)
     no_space_exit();
-  lchar->next->c = c;
-  lchar->next->w = 1;
-  lchar->next->next = NULL;
-  lchar->next->code = NULL;
+  lchar->c = c;
+  lchar->w = 0;
+  lchar->next = NULL;
+  lchar->code = NULL;
+  return lchar;
 }
 
 LinkCharNode *char_freq(FILE *f) {
-  LinkCharNode *head, *lchar;
+  LinkCharNode *head;
   head = (LinkCharNode *)malloc(sizeof(LinkCharNode));
   if (head == NULL)
     no_space_exit();
   while (!feof(f))
-    add_freq(head, fgetc(f));
+    LinkCharNode_find(head, fgetc(f))->w++;
   return head;
 }
 
-int main(int argc, char const *argv[]) {
-  FILE *f;
-  LinkCharNode *lchar;
-  LinkCodeNode *lcode;
-  HTree *htree;
+/** Write a bit into file
+ *
+ * Will cache bits until reached 1 byte.
+ * If bit is -1, clean up byte.
+ * And don't worry, will distinguish file ending with EOF code
+ */
+void write_bit(FILE *f, short bit) {
+  static short byte = 0;
+  static short bit_index = 7;
 
-  f = fopen("CCode.txt", "r");
-  if (f == NULL) {
-    printf("NO such a file!");
-    exit(2);
+  if (bit == -1) {
+    fputc(byte, f);
+    return;
   }
-  lchar = char_freq(f);
-  fclose(f);
-  int m = LinkCharNode_len(lchar);
-  htree = create_huffman(m, lchar);
-  generate_dict(htree, lchar);
+  byte += bit << bit_index;
+  bit_index--;
+  if (bit_index == -1) {
+    fputc(byte, f);
+    byte = 0;
+    bit_index = 7;
+  }
+}
+
+short read_bit(FILE *f) {
+  static short byte = 0;
+  static short bit_index = -1;
+  short result;
+
+  if (bit_index == -1) {
+    byte = fgetc(f);
+    bit_index = 7;
+  }
+  result = (byte & (1 << bit_index)) >> bit_index;
+  bit_index--;
+  return result;
+}
+
+void write_huffman(LinkCharNode *lchar_head, FILE *f_orig, FILE *f_bin) {
+  LinkCodeNode *lcode;
+  while (!feof(f_orig)) {
+    lcode = LinkCharNode_find(lchar_head, fgetc(f_orig))->code;
+    while (lcode) {
+      write_bit(f_bin, lcode->bit);
+      lcode = lcode->next;
+    }
+  }
+  write_bit(f_bin, -1);
+}
+
+void tran_huffman(HTree *htree, FILE *f_bin, FILE *f_tran) {
+  short bit;
+  int tree_index, tmp;
+  bit = read_bit(f_bin);
+  while (1) {
+    tree_index = htree->root;
+    while (1) {
+      tmp = bit ? htree->hArr[tree_index].llink : htree->hArr[tree_index].rlink;
+      if (tmp == -1)
+        break;
+      tree_index = tmp;
+      bit = read_bit(f_bin);
+    }
+    if (htree->hArr[tree_index].c == -1)
+      break;
+    fputc(htree->hArr[tree_index].c, f_tran);
+  }
+}
+
+int compare_file(FILE *f1, FILE *f2) {
+  char c1 = 0, c2 = 0;
+  while (c1 == c2 && !feof(f1) && !feof(f2)) {
+    c1 = fgetc(f1);
+    c2 = fgetc(f2);
+  }
+  return c1 - c2;
+}
+
+void print_dict(LinkCharNode *lchar) {
+  LinkCodeNode *lcode;
   while (lchar->next) {
     lchar = lchar->next;
     lcode = lchar->code;
-    printf("[%d]: ", lchar->c);
+    printf("[%3d]: ", lchar->c);
     int j = 0;
     while (lcode) {
       printf("%d", lcode->bit);
@@ -180,5 +244,43 @@ int main(int argc, char const *argv[]) {
     }
     putchar('\n');
   }
+}
+
+int main(int argc, char const *argv[]) {
+  FILE *f_orig, *f_bin, *f_tran;
+  LinkCharNode *lchar;
+
+  HTree *htree;
+
+  f_orig = fopen("CCode.txt", "r");
+  if (f_orig == NULL) {
+    printf("No such a file!");
+    exit(2);
+  }
+  lchar = char_freq(f_orig);
+  fclose(f_orig);
+  int m = LinkCharNode_len(lchar);
+  htree = create_huffman(m, lchar);
+  generate_dict(htree, lchar);
+  print_dict(lchar);
+
+  f_orig = fopen("CCode.txt", "r");
+  f_bin = fopen("CCodeBin", "w");
+  write_huffman(lchar, f_orig, f_bin);
+  fclose(f_orig);
+  fclose(f_bin);
+
+  f_bin = fopen("CCodeBin", "r");
+  f_tran = fopen("CCodeTran", "w");
+  tran_huffman(htree, f_bin, f_tran);
+  fclose(f_bin);
+  fclose(f_tran);
+
+  f_orig = fopen("CCode.txt", "r");
+  f_tran = fopen("CCodeTran", "r");
+  printf("File diff: %d\n", compare_file(f_orig, f_tran));
+  fclose(f_orig);
+  fclose(f_tran);
+
   return 0;
 }
