@@ -3,14 +3,26 @@
 #include <stdlib.h>
 
 #define MAXINT 65535
-#define MAXLEN 16
 
-typedef struct LinkChar {
+/**
+ * The last node is not an empty tail
+ * to avoid special cases
+ */
+typedef struct LinkCodeNode {
+  short bit;
+  struct LinkCodeNode *next;
+} LinkCodeNode;
+
+/**
+ * The head of LinkCharNode is an empty node
+ * to avoid special cases
+ */
+typedef struct LinkCharNode {
   char c;
   int w;
-  short code[MAXLEN];
-  struct LinkChar *next;
-} LinkChar;
+  LinkCodeNode *code;
+  struct LinkCharNode *next;
+} LinkCharNode;
 
 // Short for Huffman Tree Node
 typedef struct {
@@ -29,16 +41,35 @@ void no_space_exit() {
   exit(1);
 }
 
-int LinkChar_len(LinkChar *lc) {
+int LinkCharNode_len(LinkCharNode *lchar) {
   int m = 0;
-  while ((lc = lc->next))
+  while ((lchar = lchar->next))
     m += 1;
   return m;
 }
 
-HTree *create_huffman(int m, LinkChar *lc_head) {
+void generate_dict(HTree *htree, LinkCharNode *lchar_head) {
+  LinkCharNode *lchar;
+  LinkCodeNode *lcode;
+  lchar = lchar_head;
+  int i = 0, k;
+
+  while (lchar->next) {
+    lchar = lchar->next;
+    k = i++;
+    while (htree->hArr[k].parent != -1) {
+      lcode = (LinkCodeNode *)malloc(sizeof(LinkCodeNode));
+      lcode->bit = htree->hArr[htree->hArr[k].parent].llink == k ? 1 : 0;
+      lcode->next = lchar->code;
+      lchar->code = lcode;
+      k = htree->hArr[k].parent;
+    }
+  }
+}
+
+HTree *create_huffman(int m, LinkCharNode *lchar_head) {
   HNode *node;
-  LinkChar *lc = lc_head;
+  LinkCharNode *lchar = lchar_head;
   int min1w, min1i, min2w, min2i;
   HTree *htree = (HTree *)malloc(sizeof(HTree));
   if (htree == NULL)
@@ -53,13 +84,13 @@ HTree *create_huffman(int m, LinkChar *lc_head) {
    * Last m -1 elements are inner nodes
    */
   // Set initial values
-  lc = lc_head;
+  lchar = lchar_head;
   for (int i = 0; i < 2 * m - 1; i++) {
     node = &(htree->hArr[i]);
     node->llink = node->rlink = node->parent = -1;
     if (i < m) {
-      lc = lc->next;
-      node->w = lc->w;
+      lchar = lchar->next;
+      node->w = lchar->w;
     } else
       node->w = -1;
   }
@@ -91,40 +122,30 @@ HTree *create_huffman(int m, LinkChar *lc_head) {
     node->llink = min1i;
     node->rlink = min2i;
   }
-  lc = lc_head;
-  for (int i = 0; i < m; i++) {
-    lc = lc->next;
-    int j = 0, k = i;
-    while (htree->hArr[k].parent != -1) {
-      lc->code[j++] = htree->hArr[htree->hArr[k].parent].llink == k ? 1 : 0;
-      k = htree->hArr[k].parent;
-    }
-  }
   return htree;
 }
 
-void add_freq(LinkChar *head, char c) {
-  LinkChar *lc = head;
-  while (lc->next) {
-    lc = lc->next;
-    if (lc->c == c) {
-      lc->w += 1;
+void add_freq(LinkCharNode *head, char c) {
+  LinkCharNode *lchar = head;
+  while (lchar->next) {
+    lchar = lchar->next;
+    if (lchar->c == c) {
+      lchar->w += 1;
       return;
     }
   }
-  lc->next = (LinkChar *)malloc(sizeof(LinkChar));
-  if (lc->next == NULL)
+  lchar->next = (LinkCharNode *)malloc(sizeof(LinkCharNode));
+  if (lchar->next == NULL)
     no_space_exit();
-  lc->next->c = c;
-  lc->next->w = 1;
-  lc->next->next = NULL;
-  for (int i = 0; i < MAXLEN; i++)
-    lc->next->code[i] = -1;
+  lchar->next->c = c;
+  lchar->next->w = 1;
+  lchar->next->next = NULL;
+  lchar->next->code = NULL;
 }
 
-LinkChar *char_freq(FILE *f) {
-  LinkChar *head, *lc;
-  head = (LinkChar *)malloc(sizeof(LinkChar));
+LinkCharNode *char_freq(FILE *f) {
+  LinkCharNode *head, *lchar;
+  head = (LinkCharNode *)malloc(sizeof(LinkCharNode));
   if (head == NULL)
     no_space_exit();
   while (!feof(f))
@@ -133,24 +154,30 @@ LinkChar *char_freq(FILE *f) {
 }
 
 int main(int argc, char const *argv[]) {
-  FILE *f = fopen("CCode.txt", "r");
+  FILE *f;
+  LinkCharNode *lchar;
+  LinkCodeNode *lcode;
+  HTree *htree;
+
+  f = fopen("CCode.txt", "r");
   if (f == NULL) {
     printf("NO such a file!");
     exit(2);
   }
-  LinkChar *lc;
-  HTree *htree;
-  lc = char_freq(f);
-  int m = LinkChar_len(lc);
-  htree = create_huffman(m, lc);
-  while (lc->next) {
-    lc = lc->next;
-    printf("[%d]: ", lc->c);
+  lchar = char_freq(f);
+  fclose(f);
+  int m = LinkCharNode_len(lchar);
+  htree = create_huffman(m, lchar);
+  generate_dict(htree, lchar);
+  while (lchar->next) {
+    lchar = lchar->next;
+    lcode = lchar->code;
+    printf("[%d]: ", lchar->c);
     int j = 0;
-    while (lc->code[j++] != -1)
-      ;
-    for (j -= 2; j >= 0; j--)
-      printf("%d", lc->code[j]);
+    while (lcode) {
+      printf("%d", lcode->bit);
+      lcode = lcode->next;
+    }
     putchar('\n');
   }
   return 0;
