@@ -22,6 +22,10 @@
 
 ## 上机问题与解决
 
+### 插曲
+
+WSL Ubuntu 升级到 20.04 的时候玩脱了，出现底层的包冲突，不能卸载，没能解决。最后备份文件，重装的 WSL Ubuntu 20.04
+
 ### VSCode 编译错误
 
 > The task provider for "C/C++" tasks unexpectedly provided a task of type "shell".
