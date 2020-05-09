@@ -11,6 +11,14 @@ typedef struct BinSearchNode {
 
 typedef struct BinSearchNode * BinSearchTree;
 
+void help() {
+  printf("Commands:\n");
+  printf("\tinsert key:value\n");
+  printf("\tsearch key\n");
+  printf("\tdel key\n");
+  printf("\texit\n");
+}
+
 /** search `key` in `ptree`
  * @returns  true if found
  * @returns{pos} the found node or the last node
@@ -116,6 +124,7 @@ void evaluate(BinSearchTree *ptree) {
   int key, data;
   BinSearchNode *pos;
 
+  printf("> ");
   fgets(line, 64, stdin);
   sscanf(line, "%s %d", command, &key);
   if (strcmp(command, "insert") == 0) {
@@ -147,16 +156,13 @@ void evaluate(BinSearchTree *ptree) {
     printf("logout\n");
     exit(0);
   } else {
-    printf("Commands:\n");
-    printf("\tinsert key:value\n");
-    printf("\tsearch key\n");
-    printf("\tdel key\n");
-    printf("\texit\n");
+    help();
   }
 }
 
 int main(int argc, char const *argv[]) {
   BinSearchTree ptree = NULL;
+  help();
   while (true) evaluate(&ptree);
   return 0;
 }
